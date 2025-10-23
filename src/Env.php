@@ -18,7 +18,22 @@ class Env
 
             //MOST LIKELY A KEY/VALUE PAIR
             if(count($parts)==2){
-                //self::$values[$parts[0]]=$parts[1];
+                //TEST FOR BOOLEAN
+                if (strtolower($parts[1])=='true' || strtolower($parts[1])=='false') {
+                    $_ENV[$parts[0]] = strtolower($parts[1])=='true';
+                    continue;
+                }
+
+                //TEST FOR NUMBERS
+                if(is_numeric($parts[0])){
+                    if(is_double($parts[0])){
+                        $_ENV[$parts[0]] = floatval($parts[0]);
+                        continue;
+                    }
+                    $_ENV[$parts[0]] = intval($parts[0]);
+                    continue;
+                }
+
                 $_ENV[$parts[0]]=$parts[1];
             }
         }
