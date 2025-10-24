@@ -38,4 +38,9 @@ class Env
             }
         }
     }
+
+    public static function Set(string $key, $value):void
+    {
+        $_ENV[$key] = $value;
+    }
 }
