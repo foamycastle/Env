@@ -7,7 +7,7 @@
  * @param string $default
  * @return string
  */
-function env(string $key, string $default=""):string
+function env(string $key, string $default=""):mixed
 {
     return $_ENV[$key] ?? $default;
 }
