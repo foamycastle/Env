@@ -1,6 +1,7 @@
 <?php
 use Foamycastle\Utilities\Str;
 use Foamycastle\Utilities\Arr;
+use Foamycastle\Utilities\Path;
 /*
  * This library will only create, read, update, delete env variable prefixed with the following value
  */
@@ -27,55 +28,55 @@ class Env
     private mixed $value;
     private string $inputType;
     private bool $flatten=false;
+
     /**
-     * @param scalar|array $value
+     * @param string $key
+     * @param mixed $default
+     * @param string $delimiter
      */
     public function __construct(
-        private readonly string $key,
+        private          string $key,
         private readonly mixed  $default,
-        private readonly int    $outputType=self::OUTPUT_ARRAY,
-        private string          $delimiter=';',
+        private readonly string $delimiter=';',
     )
     {
-        if(!isset($_ENV[$this->key])) {
-            $this->value=$this->default ?? '';
+        if(!Str::Left($this->key,ENV_PREFIX)){
+            $this->key=ENV_PREFIX.$this->key;
+        }
+        if(isset($_ENV[$this->key])) {
+            $this->value=$_ENV[$this->key];
+        }else{
+            $this->value=$this->default;
         }
         $this->inputType=gettype($this->value);
-        if($outputType==self::OUTPUT_ARRAY && $delimiter==''){
-            $this->delimiter=';';
-        }
+
     }
 
 
     public function __toString(): string
     {
-        if($this->outputType == self::OUTPUT_STRING){
-            switch($this->inputType){
-                case 'string':  return (string)$this->value;
-                case 'array':   return join($this->delimiter, $this->value);
-            }
-        }
-        if($this->outputType == self::OUTPUT_ARRAY){
-            return '';
-        }
-        return (string)$this->value ?? '';
+       if($this->inputType=='array'){
+           $output=$this->value;
+           if($this->flatten) {
+               Arr::Flatten($output);
+           }
+           return join($this->delimiter, $output);
+       }
+       return $this->value;
     }
 
     public function __toArray(): array
     {
-        if($this->outputType == self::OUTPUT_ARRAY){
-            switch($this->inputType){
-                case 'string':  return explode($this->delimiter, $this->value);
-                case 'array':
-                    if($this->flatten){
-                        $output=clone $this->value;
-                        Arr::flatten($output);
-                        $this->flatten=false;
-                        return $output;
-                    }
-            }
+        if($this->inputType=='string'){
+            $this->flatten=false;
+            return [$this->key=>$this->value];
         }
-        return [];
+        $output=$this->value;
+        if($this->flatten) {
+            Arr::Flatten($output);
+        }
+        $this->flatten=false;
+        return $output;
     }
 
     public function flatten():self
@@ -93,23 +94,12 @@ class Env
     public static function Load(string $path="", bool $clear=false):void
     {
         if(!empty($path)){
-            if(str::right($path,['\\','/'])){
-                $path=dirname($path).DIRECTORY_SEPARATOR.ENV_FILENAME;
+            $path = Path::Prepare($path);
+            if($path===false){
+                throw new Exception("Invalid path");
             }
         }
-        if(Str::Right($path,ENV_FILENAME,Str::CMP_CIS)){
-            $path=realpath($path);
-            if(!file_exists($path)){
-                //the path provided is no good
-                return;
-            }
-        }else{
-            if(file_exists($path)){
-                if(trim(basename($path))=="" || !Str::Right(basename($path),ENV_FILENAME, Str::CMP_CIS)){
-                    $path=realpath(dirname($path).DIRECTORY_SEPARATOR.ENV_FILENAME);
-                }
-            }
-        }
+
 
         //cycle through each line in the file
         foreach((file($path,FILE_IGNORE_NEW_LINES) ?: []) as $line){
@@ -117,6 +107,7 @@ class Env
 
             //MOST LIKELY A KEY/VALUE PAIR
             if(count($parts)==2){
+                $parts[0]=strtoupper($parts[0]);
                 //TEST FOR BOOLEAN
                 if (strtolower($parts[1])=='true' || strtolower($parts[1])=='false') {
                     $_ENV[ENV_PREFIX.$parts[0]] = strtolower($parts[1])=='true';
