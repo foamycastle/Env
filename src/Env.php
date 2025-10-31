@@ -93,7 +93,7 @@ class Env
     public static function Load(string $path="", bool $clear=false):void
     {
         if(!empty($path)){
-            if(basename($path)==""){
+            if(str::right($path,['\\','/'])){
                 $path=dirname($path).DIRECTORY_SEPARATOR.ENV_FILENAME;
             }
         }
