@@ -1,13 +1,10 @@
 <?php
-
-
 /**
- * Return the value of an environment variable, optionally with a default value is the specified key is not present
+ * Retrieve and/or set
  * @param string $key
- * @param string $default
- * @return string
+ * @param $default
+ * @return string|null
  */
-function env(string $key, string $default=""):mixed
-{
-    return $_ENV[$key] ?? $default;
+function env(string $key,$default=null):Env{
+    return new Env($key,$default);
 }
