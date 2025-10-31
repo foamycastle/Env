@@ -32,12 +32,13 @@ class Env
      */
     public function __construct(
         private readonly string $key,
+        private readonly mixed  $default,
         private readonly int    $outputType=self::OUTPUT_ARRAY,
         private string          $delimiter=';',
     )
     {
         if(!isset($_ENV[$this->key])) {
-            $this->value='';
+            $this->value=$this->default ?? '';
         }
         $this->inputType=gettype($this->value);
         if($outputType==self::OUTPUT_ARRAY && $delimiter==''){
