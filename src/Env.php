@@ -141,7 +141,14 @@ class Env
         }
 
         //cycle through each line in the file
-        foreach((file($path,FILE_IGNORE_NEW_LINES) ?: []) as $line){
+        foreach((file($path,FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: []) as $line){
+
+            //test the line for comment chars
+            $firstChar=substr($line, 0, 1);
+            if(in_array($firstChar, self::COMMENT_CHARS)){
+                //if detected, ignore the line
+                continue;
+            }
             $parts=explode('=',$line,2) ?: [];
 
             //MOST LIKELY A KEY/VALUE PAIR
