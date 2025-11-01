@@ -23,8 +23,23 @@ defined('ENV_EXCLUDED_FROM_CLEAR')||define('ENV_EXCLUDED_FROM_CLEAR', [
 
 class Env
 {
+    public const array COMMENT_CHARS=[';','#','*','/','[',']'];
+    /**
+     * The value of the requested $_ENV key
+     * @var mixed|string[]
+     */
     private mixed $value;
+
+    /**
+     * The data type of the output
+     * @var string
+     */
     private string $inputType;
+
+    /**
+     * If the output format is an array, this is property will dictate if the array will be flattened on output
+     * @var bool
+     */
     private bool $flatten=false;
 
     /**
@@ -38,22 +53,38 @@ class Env
         private readonly string $delimiter=';',
     )
     {
+        //if the $key argument is not prefixed with the value of the ENV_PREFIX constant, make it so
         if(!Str::Left($this->key,ENV_PREFIX)){
             $this->key=ENV_PREFIX.$this->key;
         }
+
+        /*  check to see if that particular key is set in the $_ENV superglobal
+        *   If it is not set, return the default value if given.
+         *  Set the value property with the value contained in the $_ENV superglobal
+        */
         if(isset($_ENV[$this->key])) {
             $this->value=$_ENV[$this->key];
         }else{
             $this->value=$this->default;
         }
+
+        /*
+         * Search the value for the delimiter. If the delimiter is found,
+         * assume that the value is meant to be an array
+         */
         if(str_contains($this->value, $this->delimiter)){
             $this->value=explode($this->delimiter, $this->value);
         }
+
+        //finally, the set the data type property
         $this->inputType=gettype($this->value);
 
     }
 
-
+    /**
+     * Standard magic method for returning a string.  If the $_ENV value is an array, a flattened array is returned as a string
+     * @return string
+     */
     public function __toString(): string
     {
        if($this->inputType=='array'){
@@ -66,6 +97,10 @@ class Env
        return $this->value;
     }
 
+    /**
+     * Return an array if the value of the ENV variable has been read as an array
+     * @return array|string[]
+     */
     public function __toArray(): array
     {
         if($this->inputType=='string'){
@@ -163,7 +198,7 @@ class Env
     }
 
     /**
-     * Returns a constant value that specificies a path to an .env file
+     * Returns a constant value that specifies a path to an .env file
      * @return string
      */
     private static function chooseEnvPath():string
