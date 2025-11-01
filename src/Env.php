@@ -48,6 +48,9 @@ class Env
         }else{
             $this->value=$this->default;
         }
+        if(str_contains($this->value, $this->delimiter)){
+            $this->value=explode($this->delimiter, $this->value);
+        }
         $this->inputType=gettype($this->value);
 
     }
@@ -71,9 +74,9 @@ class Env
             $this->flatten=false;
             return [$this->key=>$this->value];
         }
-        $output=$this->value;
+        $output=[];
         if($this->flatten) {
-            Arr::Flatten($output);
+            Arr::Flatten([$this->key=>$this->value],$output);
         }
         $this->flatten=false;
         return $output;
@@ -87,19 +90,22 @@ class Env
 
     /**
      * Load variables from a file into the $_ENV superglobal
-     * @param string $path  the path to the file. this method will look in the $path argument and will look for an already-defined constant called 'APP_PATH'
-     * @param bool $clear   if True, the variables in the $_ENV superglobal that begin with the ENV_PREFIX value will be cleared.
+     * @param string $path the path to the file. this method will look in the $path argument and will look for an already-defined constant called 'APP_PATH'
+     * @param bool $clear if True, the variables in the $_ENV superglobal that begin with the ENV_PREFIX value will be cleared.
      * @return void
+     * @throws Exception
      */
     public static function Load(string $path="", bool $clear=false):void
     {
+        if(empty($path)){
+            $path = self::chooseEnvPath();
+        }
         if(!empty($path)){
             $path = Path::Prepare($path);
-            if($path===false){
+            if($path===''){
                 throw new Exception("Invalid path");
             }
         }
-
 
         //cycle through each line in the file
         foreach((file($path,FILE_IGNORE_NEW_LINES) ?: []) as $line){
@@ -156,5 +162,22 @@ class Env
                 }
             }
         }
+    }
+
+    /**
+     * Returns a constant value that specificies a path to an .env file
+     * @return string
+     */
+    private static function chooseEnvPath():string
+    {
+        //path argument is empty.  look for an 'APP_PATH' or 'FOAMYCST_APP_PATH' global that may contain a path to an env
+        return match(true){
+            defined(ENV_PREFIX.'APP_PATH')=>    constant(ENV_PREFIX.'APP_PATH'),
+            defined(ENV_PREFIX.'ENV_PATH')=>    constant(ENV_PREFIX.'ENV_PATH'),
+            defined('APP_PATH')=> constant('APP_PATH'),
+            defined('ENV_PATH')=> constant('ENV_PATH'),
+            defined('ENV_FILENAME')=> constant('ENV_FILENAME'),
+            default=>''
+        };
     }
 }
