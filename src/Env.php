@@ -23,8 +23,6 @@ defined('ENV_EXCLUDED_FROM_CLEAR')||define('ENV_EXCLUDED_FROM_CLEAR', [
 
 class Env
 {
-    public const int OUTPUT_ARRAY=0;
-    public const int OUTPUT_STRING=1;
     private mixed $value;
     private string $inputType;
     private bool $flatten=false;
