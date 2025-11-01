@@ -214,9 +214,9 @@ class Env
         return match(true){
             defined(ENV_PREFIX.'APP_PATH')=>    constant(ENV_PREFIX.'APP_PATH'),
             defined(ENV_PREFIX.'ENV_PATH')=>    constant(ENV_PREFIX.'ENV_PATH'),
-            defined('APP_PATH')=> constant('APP_PATH'),
-            defined('ENV_PATH')=> constant('ENV_PATH'),
-            defined('ENV_FILENAME')=> constant('ENV_FILENAME'),
+            defined('APP_PATH')=>               constant('APP_PATH'),
+            defined('ENV_PATH')=>               constant('ENV_PATH'),
+            defined('ENV_FILENAME')=>           constant('ENV_FILENAME'),
             default=>''
         };
     }
